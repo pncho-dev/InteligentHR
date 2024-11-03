@@ -1,0 +1,7 @@
+name: inteligentHrEnv
+dependencies:
+  - python
+  - flask
+  - flask-SQLAlchemy
+  - pandas
+  - fastavro
