@@ -5,3 +5,5 @@ dependencies:
   - flask-SQLAlchemy
   - pandas
   - fastavro
+  - pyscopg2
+  - python-dotenv
