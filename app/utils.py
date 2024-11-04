@@ -1,13 +1,12 @@
-# data_validation.py
-
 import pandas as pd
+from datetime import datetime
 
 def validate_data(df):
     
     empty_indices = df.index[df.isnull().any(axis=1)].tolist()
     return empty_indices
 
-def log_invalid_records(invalid_rows, filepath):
+def log_invalid_records_migrate(invalid_rows, filepath):
     
     log_filepath = filepath.replace(".csv", "")
     log_filepath = f"{log_filepath}_log.csv"
@@ -24,7 +23,7 @@ def separate_rows_migration(df, filepath):
         valid_rows = df.drop(empty_indices)
 
         # Registrar los registros inválidos
-        log_invalid_records(invalid_rows, filepath)
+        log_invalid_records_migrate(invalid_rows, filepath)
         invalid_count = len(invalid_rows)
     else:
         valid_rows = df

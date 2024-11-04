@@ -2,10 +2,11 @@ from flask import Flask, request, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 import os
-import json  # Importar el módulo json
+import json
 from dotenv import load_dotenv
-from utils import log_invalid_records, separate_valid_invalid
 import pandas as pd
+from datetime import datetime
+from backup import backup_table
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -20,13 +21,14 @@ db_name = os.getenv('DB_NAME')
 # Cargar la configuración desde el archivo config.json
 with open('../assets/db_config.json') as config_file:
     config = json.load(config_file)
-    TABLE_CONFIG = config['tables']  # Extraer la sección de tablas
+    TABLE_CONFIG = config['tables']
 
 # Inicializar la aplicación Flask
 app = Flask(__name__)
 
 # Crear la conexión a la base de datos
 engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db_name}')
+
 
 @app.route('/upload', methods=['POST'])
 def upload_data():
@@ -52,23 +54,33 @@ def upload_data():
 
         # Crear un DataFrame de los registros
         df = pd.DataFrame(table_data)
-        df.columns = TABLE_CONFIG[table_name]  # Asignar nombres de columnas desde la configuración
 
-        # Separar filas válidas e inválidas
-        valid_rows, invalid_rows, invalid_count = separate_valid_invalid(df, 'upload_log.csv')
-
-        # Registrar los registros inválidos si existen
-        if invalid_count > 0:
-            log_invalid_records(invalid_rows, 'upload_log.csv')
+        # Asignar nombres de columnas desde la configuración
+        expected_columns = TABLE_CONFIG[table_name]
+        df.columns = expected_columns
 
         # Intentar insertar los datos válidos en la base de datos
         try:
             with engine.connect() as connection:
-                valid_rows.to_sql(table_name, con=connection, if_exists='append', index=False)
+                df.to_sql(table_name, con=connection, if_exists='append', index=False)
         except IntegrityError as e:
             return jsonify({'error': f'Error al insertar datos en {table_name}: ' + str(e)}), 500
 
     return jsonify({'message': 'Datos cargados exitosamente.'}), 200
+
+
+@app.route('/backup/<table_name>', methods=['POST'])
+def backup_data(table_name):
+    """Endpoint para realizar el backup de una tabla específica."""
+    try:
+        # Validar si la tabla existe en la configuración
+        if table_name not in TABLE_CONFIG:
+            return jsonify({'error': f'La tabla "{table_name}" no existe en la configuración.'}), 400
+
+        backup_file = backup_table(table_name)  # Llama a la función de backup para la tabla específica
+        return jsonify({'message': f'Backup de la tabla "{table_name}" realizado exitosamente.', 'file': backup_file}), 200
+    except Exception as e:
+        return jsonify({'error': f'Error al realizar el backup: {e}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
