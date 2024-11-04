@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
-from data_validation import validate_data, log_invalid_records
+from utils import separate_rows_migration
 import json  # Importar el módulo json
 
 # Cargar variables de entorno desde .env
@@ -26,26 +26,22 @@ def load_csv_to_table(engine, filepath, table_name):
     df = pd.read_csv(filepath, header=None)
 
    # Asignar nombres de columnas desde la configuración
-    df.columns = TABLE_CONFIG[table_name]
-
-    # Validar los datos y obtener índices de filas vacías
-    empty_indices = validate_data(df)
+    column_names = TABLE_CONFIG[table_name]
+    df.columns = column_names
 
     # Separar filas válidas e inválidas
-    if empty_indices:
-        # Filtrar los registros vacíos
-        invalid_rows = df.iloc[empty_indices]
-        valid_rows = df.drop(empty_indices)
+    valid_rows, invalid_count = separate_rows_migration(df,filepath)
 
-        # Registrar los registros inválidos
-        log_invalid_records(invalid_rows, filepath)
-    else:
-        valid_rows = df
+    #eliminar la columna employee_id
+    if table_name == 'employee':
+        valid_rows = valid_rows.drop(columns=['employee_id'])
 
     # Insertar los datos válidos en la base de datos
     with engine.connect() as connection:
         valid_rows.to_sql(table_name, con=connection, if_exists='append', index=False)
         print(f"Los datos de '{filepath}' se han cargado correctamente en la tabla '{table_name}'.")
+        if invalid_count > 0:
+            print(f"Se registraron {invalid_count} registros inválidos en '{filepath}'.")
 
 def main():
     """Función principal para ejecutar la carga de datos."""

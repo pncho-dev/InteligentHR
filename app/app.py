@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 import os
 import json  # Importar el módulo json
 from dotenv import load_dotenv
-from data_validation import validate_data, log_invalid_records
+from utils import log_invalid_records, separate_valid_invalid
 import pandas as pd
 
 # Cargar variables de entorno desde .env
@@ -32,43 +32,43 @@ engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db_name}'
 def upload_data():
     """Endpoint para recibir nuevos datos en formato JSON y cargarlos en la base de datos."""
     data = request.json
-    table_name = data.get('table_name')
     records = data.get('records')
 
-    if not table_name or not records:
+    # Validar que se proporcionaron los datos necesarios
+    if not records:
         return jsonify({'error': 'Faltan datos necesarios.'}), 400
 
-    # Verificar si la tabla existe en la configuración
-    if table_name not in TABLE_CONFIG:
-        return jsonify({'error': 'Nombre de tabla no válido.'}), 400
+    for record in records:
+        table_name = record.get('table_name')
+        table_data = record.get('data')
 
-    # Crear DataFrame desde los registros recibidos
-    df = pd.DataFrame(records)
+        # Verificar que se proporcionaron los datos de la tabla
+        if not table_name or not table_data:
+            return jsonify({'error': 'Faltan datos necesarios en un registro.'}), 400
 
-    # Asignar nombres de columnas desde la configuración
-    df.columns = TABLE_CONFIG[table_name]
+        # Verificar que el número de registros no exceda 1000
+        if len(table_data) > 1000:
+            return jsonify({'error': f'Se permiten un máximo de 1000 registros para la tabla {table_name} por solicitud.'}), 400
 
-    # Validar los datos y obtener índices de filas vacías
-    empty_indices = validate_data(df)
+        # Crear un DataFrame de los registros
+        df = pd.DataFrame(table_data)
+        df.columns = TABLE_CONFIG[table_name]  # Asignar nombres de columnas desde la configuración
 
-    # Separar filas válidas e inválidas
-    if empty_indices:
-        invalid_rows = df.iloc[empty_indices]
-        valid_rows = df.drop(empty_indices)
+        # Separar filas válidas e inválidas
+        valid_rows, invalid_rows, invalid_count = separate_valid_invalid(df, 'upload_log.csv')
 
-        # Registrar los registros inválidos
-        log_invalid_records(invalid_rows, 'upload_log.csv')
-        return jsonify({'message': 'Algunos registros son inválidos y han sido registrados.', 'invalid_count': len(invalid_rows)}), 400
-    else:
-        valid_rows = df
+        # Registrar los registros inválidos si existen
+        if invalid_count > 0:
+            log_invalid_records(invalid_rows, 'upload_log.csv')
 
-    # Intentar insertar los datos válidos en la base de datos
-    try:
-        with engine.connect() as connection:
-            valid_rows.to_sql(table_name, con=connection, if_exists='append', index=False)
-        return jsonify({'message': 'Datos cargados exitosamente.'}), 200
-    except IntegrityError as e:
-        return jsonify({'error': 'Error al insertar datos: ' + str(e)}), 500
+        # Intentar insertar los datos válidos en la base de datos
+        try:
+            with engine.connect() as connection:
+                valid_rows.to_sql(table_name, con=connection, if_exists='append', index=False)
+        except IntegrityError as e:
+            return jsonify({'error': f'Error al insertar datos en {table_name}: ' + str(e)}), 500
+
+    return jsonify({'message': 'Datos cargados exitosamente.'}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
