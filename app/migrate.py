@@ -3,6 +3,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 from data_validation import validate_data, log_invalid_records
+import json  # Importar el módulo json
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -14,17 +15,18 @@ host = os.getenv('DB_HOST')
 port = os.getenv('DB_PORT')
 db_name = os.getenv('DB_NAME')
 
+# Cargar la configuración desde el archivo config.json
+with open('../assets/db_config.json') as config_file:
+    config = json.load(config_file)
+    TABLE_CONFIG = config['tables']  # Extraer la sección de tablas
+
+
 def load_csv_to_table(engine, filepath, table_name):
     """Cargar datos desde un archivo CSV a una tabla de la base de datos."""
     df = pd.read_csv(filepath, header=None)
 
-    # Asignar nombres de columnas según la tabla que se está cargando
-    if table_name == 'department':
-        df.columns = ['department_id', 'department']
-    elif table_name == 'employee':
-        df.columns = ['employee_id', 'name', 'datetime', 'department_id', 'job_id']
-    elif table_name == 'job':
-        df.columns = ['job_id', 'job']
+   # Asignar nombres de columnas desde la configuración
+    df.columns = TABLE_CONFIG[table_name]
 
     # Validar los datos y obtener índices de filas vacías
     empty_indices = validate_data(df)
