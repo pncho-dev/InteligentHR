@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_httpauth import HTTPBasicAuth
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 import os
@@ -20,6 +21,9 @@ db_name = os.getenv('DB_NAME')
 backup_path = os.getenv('BACKUP_PATH')
 config_path = os.getenv('CONFIG_PATH')
 
+API_USERNAME = os.getenv('API_USERNAME')
+API_PASSWORD = os.getenv('API_PASSWORD')
+
 # Cargar la configuración desde el archivo config.json
 with open(config_path+'db_config.json') as config_file:
     config = json.load(config_file)
@@ -28,11 +32,22 @@ with open(config_path+'db_config.json') as config_file:
 # Inicializar la aplicación Flask
 app = Flask(__name__)
 
+# Inicializar Flask-HTTPAuth para la autenticación básica
+auth = HTTPBasicAuth()
+
+# Verificar las credenciales del usuario con las variables de entorno
+@auth.verify_password
+def verify_password(username, password):
+    if username == API_USERNAME and password == API_PASSWORD:
+        return username
+    return None
+
 # Crear la conexión a la base de datos
 engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db_name}')
 
 
 @app.route('/upload', methods=['POST'])
+@auth.login_required
 def upload_data():
     """Endpoint para recibir nuevos datos en formato JSON y cargarlos en la base de datos."""
     data = request.json
@@ -57,11 +72,15 @@ def upload_data():
         # Crear un DataFrame de los registros
         df = pd.DataFrame(table_data)
 
-        # Asignar nombres de columnas desde la configuración
+        # Obtener las columnas esperadas de la configuración
         expected_columns = TABLE_CONFIG[table_name]
-        df.columns = expected_columns
 
-        # Intentar insertar los datos válidos en la base de datos
+        if table_name == 'employee':
+            df.columns = expected_columns[1:]  # Omitir la primera columna
+        else:
+            df.columns = expected_columns  # 
+
+        # Insertar los datos válidos en la base de datos
         try:
             with engine.connect() as connection:
                 df.to_sql(table_name, con=connection, if_exists='append', index=False)
@@ -70,8 +89,8 @@ def upload_data():
 
     return jsonify({'message': 'Datos cargados exitosamente.'}), 200
 
-
 @app.route('/backup/<table_name>', methods=['POST'])
+@auth.login_required
 def backup_data(table_name):
     """Endpoint para realizar el backup de una tabla específica."""
     try:
@@ -86,6 +105,7 @@ def backup_data(table_name):
         return jsonify({'error': f'Error al realizar el backup: {e}'}), 500
 
 @app.route('/restore/<table_name>', methods=['POST'])
+@auth.login_required
 def restore_data(table_name):
     """Endpoint para restaurar datos desde un archivo Avro a la base de datos."""
     try:

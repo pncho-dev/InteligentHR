@@ -7,3 +7,4 @@ dependencies:
   - fastavro
   - pyscopg2
   - python-dotenv
+  - Flask-HTTPAuth
