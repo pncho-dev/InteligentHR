@@ -16,7 +16,7 @@ port = os.getenv('DB_PORT')
 db_name = os.getenv('DB_NAME')
 
 # Cargar la configuración desde el archivo config.json
-with open('../assets/db_config.json') as config_file:
+with open('../data/config/db_config.json') as config_file:
     config = json.load(config_file)
     TABLE_CONFIG = config['tables']  # Extraer la sección de tablas
 
@@ -41,7 +41,7 @@ def load_csv_to_table(engine, filepath, table_name):
         valid_rows.to_sql(table_name, con=connection, if_exists='append', index=False)
         print(f"Los datos de '{filepath}' se han cargado correctamente en la tabla '{table_name}'.")
         if invalid_count > 0:
-            print(f"Se registraron {invalid_count} registros inválidos en '{filepath}'.")
+            print(f"Se registraron {invalid_count} registros inválidos")
 
 def main():
     """Función principal para ejecutar la carga de datos."""
@@ -50,9 +50,9 @@ def main():
     
     # Definir los archivos CSV y sus respectivas tablas
     files = {
-        'C:/Users/danie/OneDrive/Documentos/InteligentHR/assets/data/departments.csv': 'department',
-        'C:/Users/danie/OneDrive/Documentos/InteligentHR/assets/data/jobs.csv': 'job',
-        'C:/Users/danie/OneDrive/Documentos/InteligentHR/assets/data/hired_employees.csv': 'employee'
+        '../data/historic_data/departments.csv': 'department',
+        '../data/historic_data/jobs.csv': 'job',
+        '../data/historic_data/hired_employees.csv': 'employee'
     }
     
     for filepath, table_name in files.items():

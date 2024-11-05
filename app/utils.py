@@ -9,6 +9,7 @@ def validate_data(df):
 def log_invalid_records_migrate(invalid_rows, filepath):
     
     log_filepath = filepath.replace(".csv", "")
+    log_filepath = log_filepath.replace("historic_data", "logs")
     log_filepath = f"{log_filepath}_log.csv"
     invalid_rows.to_csv(log_filepath, index=False, header=False)
 

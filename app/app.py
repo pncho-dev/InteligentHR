@@ -17,9 +17,11 @@ password = os.getenv('DB_PASSWORD')
 host = os.getenv('DB_HOST')
 port = os.getenv('DB_PORT')
 db_name = os.getenv('DB_NAME')
+backup_path = os.getenv('BACKUP_PATH')
+config_path = os.getenv('CONFIG_PATH')
 
 # Cargar la configuración desde el archivo config.json
-with open('../assets/db_config.json') as config_file:
+with open(config_path+'db_config.json') as config_file:
     config = json.load(config_file)
     TABLE_CONFIG = config['tables']
 
@@ -72,7 +74,6 @@ def upload_data():
 @app.route('/backup/<table_name>', methods=['POST'])
 def backup_data(table_name):
     """Endpoint para realizar el backup de una tabla específica."""
-    backup_path="../assets/"
     try:
         # Validar si la tabla existe en la configuración
         if table_name not in TABLE_CONFIG:
@@ -87,7 +88,6 @@ def backup_data(table_name):
 @app.route('/restore/<table_name>', methods=['POST'])
 def restore_data(table_name):
     """Endpoint para restaurar datos desde un archivo Avro a la base de datos."""
-    backup_path="../assets/"
     try:
         # Validar si la tabla existe en la configuración
         if table_name not in TABLE_CONFIG:
