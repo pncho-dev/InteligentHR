@@ -5,8 +5,8 @@ import os
 import json
 from dotenv import load_dotenv
 import pandas as pd
-from datetime import datetime
 from backup import backup_table
+from restore import restore_table_from_avro
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -72,15 +72,31 @@ def upload_data():
 @app.route('/backup/<table_name>', methods=['POST'])
 def backup_data(table_name):
     """Endpoint para realizar el backup de una tabla específica."""
+    backup_path="../assets/"
     try:
         # Validar si la tabla existe en la configuración
         if table_name not in TABLE_CONFIG:
             return jsonify({'error': f'La tabla "{table_name}" no existe en la configuración.'}), 400
 
-        backup_file = backup_table(table_name)  # Llama a la función de backup para la tabla específica
+        backup_file = backup_table(table_name,backup_path)  # Llama a la función de backup para la tabla específica
         return jsonify({'message': f'Backup de la tabla "{table_name}" realizado exitosamente.', 'file': backup_file}), 200
+    
     except Exception as e:
         return jsonify({'error': f'Error al realizar el backup: {e}'}), 500
+
+@app.route('/restore/<table_name>', methods=['POST'])
+def restore_data(table_name):
+    """Endpoint para restaurar datos desde un archivo Avro a la base de datos."""
+    backup_path="../assets/"
+    try:
+        # Validar si la tabla existe en la configuración
+        if table_name not in TABLE_CONFIG:
+            return jsonify({'error': f'La tabla "{table_name}" no existe en la configuración.'}), 400
+        restore_table_from_avro(table_name,backup_path)
+        return jsonify({'message': 'Datos restaurados exitosamente.'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

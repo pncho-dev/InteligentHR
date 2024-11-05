@@ -26,21 +26,21 @@ def get_avro_type(data_type):
 
     return avro_type_map.get(str(data_type), 'string')
 
-def backup_table(table_name):
-    """Realiza un backup de la tabla especificada en formato Avro."""
+def backup_table(table_name, backup_path):
+    """Realiza un backup de la tabla especificada en formato Avro y guarda el archivo en la ruta indicada."""
     # Crear la conexión a la base de datos
     engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db_name}')
-
+    
     try:
-        # Leer la tabla especificada
+        # Leer la tabla especificada en un DataFrame
         df = pd.read_sql_table(table_name, con=engine)
 
-        # Convertir columnas de tipo datetime a strings
+        # Convertir todas las columnas datetime a formato string
         for col in df.select_dtypes(include=['datetime64[ns]']).columns:
-            df[col] = df[col].dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ') 
+            df[col] = df[col].dt.strftime('%Y-%m-%dT%H:%M:%S.%fZ')  # Formato de fecha iso
 
         # Generar el nombre del archivo de backup
-        backup_file = f"backup_{table_name}.avro"
+        backup_file = os.path.join(backup_path, f"backup_{table_name}.avro")
 
         # Definir el esquema de Avro
         schema = {
@@ -49,7 +49,7 @@ def backup_table(table_name):
             "fields": []
         }
 
-        # Generar el esquema 
+        # Generar el esquema de Avro
         for col in df.columns:
             avro_type = get_avro_type(df[col].dtype)
             schema["fields"].append({
@@ -57,7 +57,7 @@ def backup_table(table_name):
                 "type": avro_type
             })
 
-        # Convertir DataFrame a una lista de diccionarios
+        # Convertir el DataFrame a una lista de diccionarios
         records = df.to_dict(orient='records')
 
         # Guardar los datos en formato Avro
@@ -66,6 +66,7 @@ def backup_table(table_name):
 
         print(f"Backup de la tabla '{table_name}' guardado en '{backup_file}'.")
         return backup_file
+
     except Exception as e:
-        print(f"Error al realizar el backup de la tabla '{table_name}': {e}")
-        raise
+        print( f"Error al realizar el backup de la tabla '{table_name}': {e}")
+        
