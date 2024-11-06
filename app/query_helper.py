@@ -12,6 +12,7 @@ password = os.getenv('DB_PASSWORD')
 host = os.getenv('DB_HOST')
 port = os.getenv('DB_PORT')
 db_name = os.getenv('DB_NAME')
+queries_path = os.getenv('QUERIES_PATH')
 
 # Crear la conexión a la base de datos
 engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db_name}')
@@ -32,10 +33,10 @@ def execute_sql(query):
 
 def get_employee_counts():
     """Lee y ejecuta la consulta de conteo de empleados por trimestre."""
-    query = read_sql_file('../data/queries/employee_counts.sql')  # Ruta al archivo SQL
+    query = read_sql_file(queries_path+'employee_counts.sql')  # Ruta al archivo SQL
     return execute_sql(query)
 
 def get_departments_with_most_hired():
     """Lee y ejecuta la consulta de departamentos con más empleados contratados."""
-    query = read_sql_file('../data/queries/departments_most_hired.sql')  # Ruta al archivo SQL
+    query = read_sql_file(queries_path+'departments_most_hired.sql')  # Ruta al archivo SQL
     return execute_sql(query)
