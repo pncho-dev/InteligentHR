@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import pandas as pd
 from backup import backup_table
 from restore import restore_table_from_avro
+from query_helper import get_employee_counts, get_departments_with_most_hired
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -45,7 +46,6 @@ def verify_password(username, password):
 # Crear la conexión a la base de datos
 engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db_name}')
 
-
 @app.route('/upload', methods=['POST'])
 @auth.login_required
 def upload_data():
@@ -78,7 +78,7 @@ def upload_data():
         if table_name == 'employee':
             df.columns = expected_columns[1:]  # Omitir la primera columna
         else:
-            df.columns = expected_columns  # 
+            df.columns = expected_columns  
 
         # Insertar los datos válidos en la base de datos
         try:
@@ -116,6 +116,27 @@ def restore_data(table_name):
         return jsonify({'message': 'Datos restaurados exitosamente.'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/employee_counts', methods=['GET'])
+@auth.login_required
+def employee_counts():
+    """Endpoint para obtener el conteo de empleados por trimestre en 2021."""
+    try:
+        result = get_employee_counts()  # Ejecuta la consulta de conteo de empleados
+        return jsonify({'data': result}), 200
+    except Exception as e:
+        return jsonify({'error': f'Error al ejecutar la consulta: {str(e)}'}), 500
+
+@app.route('/departments_most_hired', methods=['GET'])
+@auth.login_required
+def departments_most_hired():
+    """Endpoint para obtener los departamentos con más empleados contratados en 2021."""
+    try:
+        result = get_departments_with_most_hired()  # Ejecuta la consulta de departamentos con más empleados contratados
+        return jsonify({'data': result}), 200
+    except Exception as e:
+        return jsonify({'error': f'Error al ejecutar la consulta: {str(e)}'}), 500
+
 
 
 if __name__ == '__main__':
