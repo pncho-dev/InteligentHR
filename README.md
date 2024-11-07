@@ -99,7 +99,7 @@ El diagrama entidad relación implementado es el siguiente
 ![data model](assets/intelligent_hr_data_model.png)
 
 
-# Arquitectura en AWS para INTELIGENTHR
+# Arquitectura en AWS para IntelligentHR
 
 Esta es una arquitectura básica utilizando varios servicios de AWS, diseñada para manejar la API, los backups, la ingesta de información histórica y las interacciones con la base de datos.
 
