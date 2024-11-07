@@ -99,5 +99,48 @@ El diagrama entidad relación implementado es el siguiente
 ![data model](assets/intelligent_hr_data_model.png)
 
 ## Arquitectura en AWS 
-La arquitectura sugerida para implementar este proyecto en AWS es la siguiente
+
+Claro, aquí tienes una descripción más básica de la arquitectura en AWS para tu proyecto, usando API Gateway, Lambdas, RDS, S3, Glue y Step Functions. He simplificado la explicación y la he convertido a formato Markdown para que sea más fácil de leer.
+
+markdown
+Copiar código
+# Arquitectura en AWS para "INTELIGENTHR"
+
+Esta es una arquitectura básica utilizando varios servicios de AWS, diseñada para manejar la API, los backups, la ingesta de información histórica y las interacciones con la base de datos.
+
 ![data model](assets/cloud_architecture.jpg)
+
+## Componentes Principales
+
+1. **API Gateway**
+   - **Propósito**: Gestiona las solicitudes HTTP de los usuarios.
+   - **Funcionamiento**: 
+     - Recibe solicitudes (por ejemplo, para cargar datos o consultar información).
+     - Dirige las solicitudes a funciones **Lambda**.
+
+2. **Lambda Functions**
+   - **Propósito**: Ejecuta la lógica de negocio.
+   - **Funcionamiento**:
+     - **Lambda 1**: Inserta o consulta datos en **RDS**.
+     - **Lambda 2**: Realiza backups y restauración de datos desde **S3**.
+
+3. **RDS (Relational Database Service)**
+   - **Propósito**: Almacena los datos principales (por ejemplo, registros de empleados).
+   - **Funcionamiento**: Gestiona y almacena los datos estructurados de la aplicación.
+
+4. **S3 (Simple Storage Service)**
+   - **Propósito**: Almacena archivos como backups y datos históricos.
+   - **Funcionamiento**:
+     - Guarda los backups generados por **Lambda**.
+     - Almacena archivos históricos que luego se cargan en **RDS**.
+
+5. **Glue**
+   - **Propósito**: Realiza tareas de transformación de datos.
+   - **Funcionamiento**:
+     - Lee y transforma archivos desde **S3** (por ejemplo, CSV o Avro) y los carga en **RDS**.
+
+6. **Step Functions**
+   - **Propósito**: Orquesta flujos de trabajo entre servicios.
+   - **Funcionamiento**:
+     - Coordina la ingesta de datos históricos desde **S3** a **RDS** a través de **Lambda** y **Glue**.
+
