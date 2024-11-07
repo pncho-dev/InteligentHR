@@ -1,0 +1,8 @@
+{
+    "tables": {
+        "department": ["department_id", "department"],
+        "employee": ["employee_id", "name", "datetime", "department_id", "job_id"],
+        "job": ["job_id", "job"],
+        "project": ["project_id", "project_name", "start_date", "end_date"]
+    }
+}
