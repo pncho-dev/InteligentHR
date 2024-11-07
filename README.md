@@ -97,3 +97,7 @@ Ejemplo de solicitud **POST  /upload**
 ## Modelo de datos
 El diagrama entidad relación implementado es el siguiente
 ![data model](assets/intelligent_hr_data_model.png)
+
+## Arquitectura en AWS 
+La arquitectura sugerida para implementar este proyecto en AWS es la siguiente
+![data model](assets/cloud_architecture.jpg)
