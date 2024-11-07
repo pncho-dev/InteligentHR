@@ -98,13 +98,8 @@ Ejemplo de solicitud **POST  /upload**
 El diagrama entidad relación implementado es el siguiente
 ![data model](assets/intelligent_hr_data_model.png)
 
-## Arquitectura en AWS 
 
-Claro, aquí tienes una descripción más básica de la arquitectura en AWS para tu proyecto, usando API Gateway, Lambdas, RDS, S3, Glue y Step Functions. He simplificado la explicación y la he convertido a formato Markdown para que sea más fácil de leer.
-
-markdown
-Copiar código
-# Arquitectura en AWS para "INTELIGENTHR"
+# Arquitectura en AWS para INTELIGENTHR
 
 Esta es una arquitectura básica utilizando varios servicios de AWS, diseñada para manejar la API, los backups, la ingesta de información histórica y las interacciones con la base de datos.
 
